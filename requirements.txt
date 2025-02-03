@@ -1,0 +1,12 @@
+Django>=5.0
+djangorestframework>=3.14,<4.0
+psycopg2-binary>=2.9,<3.0
+requests~=2.32.3
+django-filter==22.1
+python-dotenv==1.0.1
+
+django_debug_toolbar==3.8.1
+
+beautifulsoup4==4.12.3
+
+drf-yasg==1.21.8

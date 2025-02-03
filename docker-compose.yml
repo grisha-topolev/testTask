@@ -1,0 +1,27 @@
+volumes:
+  pgdb_data:
+    driver: local
+
+services:
+  pgdb:
+    image: postgres
+    env_file: .env
+    volumes:
+      - pgdb_data:/var/lib/postgresql/data
+
+  app:
+    build: ..
+    env_file: ../app/.env
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    depends_on:
+      - pgdb
+    ports:
+      - 8000:8000
+    command: sleep 10000
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
