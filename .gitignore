@@ -43,3 +43,5 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+app/modems/migrations/
+!app/modems/migrations/__init__.py
