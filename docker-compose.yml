@@ -6,12 +6,14 @@ services:
   pgdb:
     image: postgres
     env_file: .env
+    ports:
+      - 5432:5432
     volumes:
       - pgdb_data:/var/lib/postgresql/data
 
-  app:
-    build: ..
-    env_file: ../app/.env
+  app: #не понял как у тебя работало, но у меня не получилось. Исправил на рабочий вариант.
+    build: ./
+    env_file: .env
     working_dir: /app
     volumes:
       - ./app:/app
@@ -19,7 +21,13 @@ services:
       - pgdb
     ports:
       - 8000:8000
-    command: sleep 10000
+    command:
+      bash -c
+      "
+      python3 manage.py makemigrations &&
+      python3 manage.py migrate &&
+      python3 manage.py runserver 0.0.0.0:8000
+      "
 
   adminer:
     image: adminer

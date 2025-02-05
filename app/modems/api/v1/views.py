@@ -41,6 +41,7 @@ class ModemProcessor(EntityProcessor):
         return modem
 
 
+# Записывать нужно только последний элемент(более актуальный)
 class SensorProcessor(EntityProcessor):
     def __init__(self, modem: Modem, data: Dict[str, Any], timestamp: datetime):
         super().__init__(data, timestamp)
@@ -49,14 +50,14 @@ class SensorProcessor(EntityProcessor):
     def process(self) -> None:
         self._create_or_update_sensor(
             mac=self.data['name1'],
-            vibrations=self.data['vibrations1'],
-            temperature=self.data['temperature1']
+            vibrations=self.data['vibrations1'][-1],
+            temperature=self.data['temperature1'][-1]
         )
         
         self._create_or_update_sensor(
             mac=self.data['name2'],
-            vibrations=self.data['vibrations2'],
-            temperature=self.data['temperature2']
+            vibrations=self.data['vibrations2'][-1],
+            temperature=self.data['temperature2'][-1]
         )
 
     def _create_or_update_sensor(self, mac: str, vibrations: float, temperature: float) -> None:
@@ -81,10 +82,38 @@ class CounterProcessor(EntityProcessor):
             self._create_counter(counter_data)
 
     def _create_counter(self, counter_data: Dict[str, Any]) -> None:
-        Counter.objects.create(
+        Counter.objects.update_or_create(
             modem=self.modem,
-            timestamp=self.timestamp,
-            **counter_data
+            address=counter_data["address"],
+            defaults={
+                "timestamp": self.timestamp,
+                "energy": counter_data["energy"][-1],
+                "cos_fi_a": counter_data["cos_fi_a"][-1],
+                "cos_fi_b": counter_data["cos_fi_b"][-1],
+                "cos_fi_c": counter_data["cos_fi_c"][-1],
+                "cos_fi_common": counter_data["cos_fi_common"][-1],
+                "freq_a": counter_data["freq_a"][-1],
+                "freq_b": counter_data["freq_b"][-1],
+                "freq_c": counter_data["freq_c"][-1],
+                "freq_common": counter_data["freq_common"][-1],
+                "voltage_a": counter_data["voltage_a"][-1],
+                "voltage_b": counter_data["voltage_b"][-1],
+                "voltage_c": counter_data["voltage_c"][-1],
+                "voltage_common": counter_data["voltage_common"][-1],
+                "current_a": counter_data["current_a"][-1],
+                "current_b": counter_data["current_b"][-1],
+                "current_c": counter_data["current_c"][-1],
+                "current_common": counter_data["current_common"][-1],
+                "whole_power_a": counter_data["whole_power_a"][-1],
+                "whole_power_b": counter_data["whole_power_b"][-1],
+                "whole_power_c": counter_data["whole_power_c"][-1],
+                "active_power_a": counter_data["active_power_a"][-1],
+                "active_power_b": counter_data["active_power_b"][-1],
+                "active_power_c": counter_data["active_power_c"][-1],
+                "reactive_power_a": counter_data["reactive_power_a"][-1],
+                "reactive_power_b": counter_data["reactive_power_b"][-1],
+                "reactive_power_c": counter_data["reactive_power_c"][-1]
+            }
         )
 
 
@@ -99,13 +128,13 @@ def process_modem_data(request: Request) -> Response:
             data = serializer.validated_data
             timestamps = parse_timestamps(data['time'])
             
-            modem_processor = ModemProcessor(data, timestamps[0])
+            modem_processor = ModemProcessor(data, timestamps[-1])
             modem = modem_processor.process()
             
-            sensor_processor = SensorProcessor(modem, data, timestamps[0])
+            sensor_processor = SensorProcessor(modem, data, timestamps[-1])
             sensor_processor.process()
             
-            counter_processor = CounterProcessor(modem, data['counters'], timestamps[0])
+            counter_processor = CounterProcessor(modem, data['counters'], timestamps[-1])
             counter_processor.process()
 
         return Response({'status': 'success'}, status=status.HTTP_201_CREATED)
